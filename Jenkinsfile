@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "react-app"
+        IMAGE = "react-app"
         REGISTRY = "harbor.cubastion.net"
         PROJECT = "test"
         FULL_IMAGE = "${REGISTRY}/${PROJECT}/${IMAGE}"
@@ -28,9 +28,15 @@ pipeline {
 
         stage("Login to Harbor") {
             steps {
-                sh """
-                echo $HARBOR_PASS | docker login ${REGISTRY} -u $HARBOR_USER --password-stdin
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: 'HARBOR_PASS',
+                    usernameVariable: 'HARBOR_USER',
+                    passwordVariable: 'HARBOR_PASSWORD'
+                )]) {
+                    sh """
+                    echo "$HARBOR_PASSWORD" | docker login ${REGISTRY} -u "$HARBOR_USER" --password-stdin
+                    """
+                }
             }
         }
 
