@@ -13,7 +13,7 @@ pipeline {
 
         stage("Checkout Code") {
             steps {
-                git "https://github.com/anchitguptacubastion/react-app"
+                git branch: 'main', url: 'https://github.com/anchitguptacubastion/react-app'
             }
         }
 
