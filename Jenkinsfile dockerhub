@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
+        DOCKER_USER = "anchitguptacubastion"
         IMAGE = "react-app"
-        REGISTRY = "harbor.cubastion.net"
-        PROJECT = "sre-training"
-        FULL_IMAGE = "${REGISTRY}/${PROJECT}/${IMAGE}"
+        FULL_IMAGE = "docker.io/${DOCKER_USER}/${IMAGE}"
 
     }
 
@@ -26,21 +25,21 @@ pipeline {
             }
         }
 
-        stage("Login to Harbor") {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'HARBOR_PASS1',
-                    usernameVariable: 'HARBOR_USER',
-                    passwordVariable: 'HARBOR_PASSWORD'
+        stage("Login to Docker Hub") {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'DOCKER_HUB_CREDS',
+            usernameVariable: 'DOCKERHUB_USER',
+            passwordVariable: 'DOCKERHUB_PASS'
                 )]) {
                     sh """
-                    echo "$HARBOR_PASSWORD" | docker login ${REGISTRY} -u "$HARBOR_USER" --password-stdin
+                    echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
                     """
                 }
             }
         }
 
-        stage("Push to Harbor") {
+        stage("Push to Docker Hub") {
             steps {
                 sh """
                 docker push ${FULL_IMAGE}:${BUILD_NUMBER}
