@@ -5,45 +5,54 @@ pipeline {
         IMAGE_NAME = "react-app"
         REGISTRY = "harbor.cubastion.net"
         PROJECT = "test"
+        FULL_IMAGE = "${REGISTRY}/${PROJECT}/${IMAGE}"
 
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage("Checkout Code") {
             steps {
-                git 'https://github.com/your/frontend.git'
+                git "https://github.com/anchitguptacubastion/react-app"
             }
         }
 
-        stage('Install & Build') {
+        stage("Build Docker Image") {
             steps {
-                sh '''
-                npm install
-                npm run build
-                '''
+                sh """
+                docker build -t ${FULL_IMAGE}:${BUILD_NUMBER} .
+                docker tag ${FULL_IMAGE}:${BUILD_NUMBER} ${FULL_IMAGE}:latest
+                """
             }
         }
 
-        stage('Docker Build') {
+        stage("Login to Harbor") {
             steps {
-                sh 'docker build -t $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER .'
+                sh """
+                echo $HARBOR_PASS | docker login ${REGISTRY} -u $HARBOR_USER --password-stdin
+                """
             }
         }
 
-        stage('Docker Push') {
+        stage("Push to Harbor") {
             steps {
-                sh '''
-                docker login -u $DOCKER_USER -p $DOCKER_PASS
-                docker push $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER
-                '''
+                sh """
+                docker push ${FULL_IMAGE}:${BUILD_NUMBER}
+                docker push ${FULL_IMAGE}:latest
+                """
             }
         }
 
-        stage('Deploy to Server') {
-            steps {
-                sh 'ssh ubuntu@yourserver "docker pull $REGISTRY/$IMAGE_NAME:$BUILD_NUMBER && docker compose -f frontend.yml up -d"'
-            }
-        }
+        // stage("Deploy on Server") {
+        //     steps {
+        //         sh """
+        //         ssh sadmin@10.0.0.37 "
+        //             docker login ${REGISTRY} -u ${HARBOR_USER} -p ${HARBOR_PASS} &&
+        //             docker pull ${FULL_IMAGE}:latest &&
+        //             docker compose -f frontend.yml up -d --force-recreate
+        //         "
+        //         """
+        //     }
+        // } 
     }
 }
